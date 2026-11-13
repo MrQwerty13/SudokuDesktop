@@ -62,6 +62,22 @@ public class SudokuSolverTests
     }
 
     [Fact]
+    public void Solve_reports_no_solution_for_consistent_but_unsolvable_grid()
+    {
+        var puzzle = Grid.FromString(TestPuzzles.Unsolvable);
+
+        Assert.True(puzzle.IsConsistent);
+        Assert.False(puzzle.IsComplete);
+
+        var result = _solver.Solve(puzzle);
+
+        Assert.Equal(SolveOutcome.NoSolution, result.Outcome);
+        Assert.False(result.HasSolution);
+        Assert.Equal(0, result.SolutionCount);
+        Assert.Equal(0, _solver.CountSolutions(puzzle, 5));
+    }
+
+    [Fact]
     public void Solve_reports_multiple_solutions_for_ambiguous_grid()
     {
         var puzzle = Grid.FromString(TestPuzzles.Ambiguous);
@@ -74,6 +90,28 @@ public class SudokuSolverTests
         var solutions = result.Solutions.Select(solution => solution.ToString()).ToArray();
         Assert.Contains(TestPuzzles.AmbiguousSolution, solutions);
         Assert.Contains(TestPuzzles.AmbiguousAlternativeSolution, solutions);
+    }
+
+    [Fact]
+    public void Solve_returns_complete_and_consistent_solution()
+    {
+        var puzzle = Grid.FromString(TestPuzzles.Classic);
+
+        var result = _solver.Solve(puzzle);
+
+        var solution = result.Solution;
+        Assert.NotNull(solution);
+        Assert.True(solution!.IsComplete);
+        Assert.True(solution.IsConsistent);
+    }
+
+    [Fact]
+    public void Solve_reports_multiple_solutions_for_empty_grid()
+    {
+        var result = _solver.Solve(Grid.Empty);
+
+        Assert.Equal(SolveOutcome.MultipleSolutions, result.Outcome);
+        Assert.Equal(2, result.SolutionCount);
     }
 
     [Fact]
@@ -146,6 +184,16 @@ public class SudokuSolverTests
     {
         Assert.Throws<ArgumentNullException>(() => _solver.Solve(null!));
         Assert.Throws<ArgumentNullException>(() => _solver.CountSolutions(null!, 1));
+    }
+
+    [Fact]
+    public void Solve_rejects_malformed_grid_text_at_the_boundary()
+    {
+        Assert.Throws<ArgumentException>(() => Grid.FromString("123"));
+        Assert.Throws<ArgumentException>(() => Grid.FromString(TestPuzzles.Classic[..80] + "x"));
+
+        Assert.False(Grid.TryFromString(TestPuzzles.Classic[..80] + "x", out var grid));
+        Assert.Null(grid);
     }
 
     [Fact]
