@@ -23,6 +23,7 @@
 - [x] Документы: README.md, Card.md, AGENTS.md, docs/ARCHITECTURE.md, docs/REQUIREMENTS.md,
       docs/TASKS.md, docs/ADR/0001–0005
 - [x] Обновление `.gitignore` (добавлен `.idea/`)
+- [x] Базовое состояние зафиксировано владельцем коммитом `5455959` ("Created Base")
 
 **Критерии завершения**
 
@@ -36,31 +37,52 @@
 
 ---
 
-## Этап 1. Инфраструктура решения — ⬜ Не начато
+## Этап 1. Инфраструктура решения — ✅ Завершён
 
 **Цель:** подготовить структуру решения и тестовую инфраструктуру.
 
 **Содержание**
 
-- [ ] Обновить пакеты: Avalonia 12.0.4 → 12.1.6, `AvaloniaUI.DiagnosticsSupport` 2.2.1 → 2.2.3,
-      `CommunityToolkit.Mvvm` 8.4.1 → 8.4.2
-- [ ] Создать `Sudoku.Core` (classlib, `net10.0`) и перенести/оставить в `Sudoku.App` только UI
-- [ ] Создать `Sudoku.Infrastructure` (classlib) со ссылкой на `Sudoku.Core`
-- [ ] Создать `Sudoku.Core.Tests`, `Sudoku.Infrastructure.Tests`, `Sudoku.App.Tests` (xUnit v3)
-- [ ] Подключить `Avalonia.Headless` + `Avalonia.Headless.XUnit` 12.1.6 в `Sudoku.App.Tests`
-- [ ] Добавить `Directory.Build.props` (общие `Nullable`, `TreatWarningsAsErrors`, `LangVersion`)
-- [ ] Добавить `.editorconfig` и проверить `dotnet format --verify-no-changes`
-- [ ] Настроить `Directory.Packages.props` (централизованное управление версиями) — по решению владельца
-- [ ] Добавить в `Sudoku.App` регистрацию DI (`Microsoft.Extensions.DependencyInjection`) — по решению владельца
-- [ ] Обновить `README.md`, `AGENTS.md`, `docs/TASKS.md`
+- [x] Обновить пакеты: Avalonia 12.0.4 → **12.1.6**, `AvaloniaUI.DiagnosticsSupport` 2.2.1 → **2.2.3**,
+      `CommunityToolkit.Mvvm` 8.4.1 → **8.4.2**
+- [x] Создать `Sudoku.Domain` (classlib, `net10.0`) — домен без UI и ФС
+- [x] Создать `Sudoku.Application` (classlib) — сценарии и порты, зависит от `Sudoku.Domain`
+- [x] Создать `Sudoku.Infrastructure` (classlib) — зависит от `Sudoku.Application`
+- [x] Перенести скаффолд Avalonia в `src/Sudoku.App` (проект `Sudoku` → `Sudoku.App`,
+      namespace `Sudoku` сохранён)
+- [x] Создать `Sudoku.Domain.Tests`, `Sudoku.Application.Tests`, `Sudoku.Infrastructure.Tests`,
+      `Sudoku.App.Tests` (xUnit v3, Microsoft.Testing.Platform)
+- [x] Подключить `Avalonia.Headless` + `Avalonia.Headless.XUnit` 12.1.6 в `Sudoku.App.Tests`
+- [x] Добавить `Directory.Build.props` (общие `net10.0`, `Nullable`, `TreatWarningsAsErrors`,
+      `AnalysisLevel`, `GenerateDocumentationFile`)
+- [x] Добавить `Directory.Packages.props` — централизованное управление версиями пакетов
+- [x] Добавить `.editorconfig`; `dotnet format --verify-no-changes` проходит без замечаний
+- [x] DI-контейнер **не подключён** — на этапе 1 нет ни одного внедряемого сервиса
+      ([ADR-0007](ADR/0007-composition-without-di-container.md))
+- [x] Минимальное главное окно + ViewModel, показывающие данные доменного слоя
+- [x] Обновить `README.md`, `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/ADR/0006`, `docs/ADR/0007`,
+      `docs/TASKS.md`
 
 **Критерии завершения**
 
-- `dotnet build` — 0 warnings, 0 errors
-- `dotnet test` — тестовые проекты собираются, есть по одному проходящему «здоровяку»-тесту в каждом
-- `Sudoku.Core` не содержит ни одной ссылки на Avalonia и `System.IO` (проверяется вручную и ревью)
+- `dotnet build` — 0 warnings, 0 errors — ✅
+- `dotnet test` — 10 тестов, все зелёные — ✅
+- `dotnet format --verify-no-changes` — без замечаний — ✅
+- `Sudoku.Domain` не содержит ссылок на Avalonia и другие слои — ✅ (проверено тестом)
+- Приложение запускается, окно открывается — ✅ (проверено на macOS)
 
-**Риски:** несовместимость `AvaloniaUI.DiagnosticsSupport` с Avalonia 12.1.6 → проверить первым шагом.
+**Решения, принятые в рамках этапа (требуют подтверждения владельца)**
+
+- Разделение Domain и Application на **отдельные проекты** вместо одного `Sudoku.Core`
+  ([ADR-0006](ADR/0006-domain-application-projects.md) заменяет
+  [ADR-0002](ADR/0002-project-and-layer-structure.md)) — по требованию владельца к этому этапу.
+- Отказ от DI-контейнера до появления первого реального сервиса
+  ([ADR-0007](ADR/0007-composition-without-di-container.md)).
+- Централизованное управление версиями пакетов (`Directory.Packages.props`).
+- Реализованы `Difficulty`, `GameMode` (домен) и `GameOptions` (application) — минимальный
+  набор, позволяющий проверить проводку слоёв; остальные типы домена — в этапе 2.
+- `AvaloniaUI.DiagnosticsSupport` (мост к Avalonia Plus Developer Tools) оставлен только для
+  Debug-сборок; лицензионный статус инструмента требует решения (см. Card.md, §8, п. 19).
 
 ---
 
@@ -79,7 +101,7 @@
 
 **Критерии завершения**
 
-- `Sudoku.Core` собирается без ссылок на Avalonia/System.IO
+- `Sudoku.Domain` собирается без ссылок на Avalonia/System.IO
 - Покрытие тестами всех публичных членов домена
 - `dotnet test` зелёный
 
@@ -294,7 +316,7 @@ Swordfish, XY-Wing, цепочки)» и решения по банку пред
 | Этап | Название | Статус |
 |---|---|---|
 | 0 | Рекогносцировка и фиксация стека | ✅ Завершено |
-| 1 | Инфраструктура решения | ⬜ Не начато |
+| 1 | Инфраструктура решения | ✅ Завершён |
 | 2 | Домен: доска и головоломка | ⬜ Не начато |
 | 3 | Решатель и уникальность | ⬜ Не начато |
 | 4 | Генератор и рейтинг v1 | ⬜ Не начато |

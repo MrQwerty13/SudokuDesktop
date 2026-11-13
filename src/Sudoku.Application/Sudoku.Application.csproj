@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Sudoku.Application</RootNamespace>
+    <AssemblyName>Sudoku.Application</AssemblyName>
+    <Description>Application layer of Sudoku Desktop. Use cases over the domain, no UI, no I/O.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Sudoku.Domain/Sudoku.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

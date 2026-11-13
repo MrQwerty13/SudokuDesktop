@@ -1,8 +1,14 @@
 # ADR-0002. Структура решения: три проекта вместо четырёх
 
-- **Статус:** Принято
+- **Статус:** **Superseded by ADR-0006**
 - **Дата:** 2026-11-13
-- **Связано с:** [ADR-0001](0001-dotnet-avalonia-stack.md), [ADR-0004](0004-state-persistence-and-timer.md)
+- **Связано с:** [ADR-0001](0001-dotnet-avalonia-stack.md), [ADR-0004](0004-state-persistence-and-timer.md),
+  [ADR-0006](0006-domain-application-projects.md)
+
+> **Внимание.** Это решение заменено [ADR-0006](0006-domain-application-projects.md):
+> Domain и Application выделены в отдельные проекты, чтобы границы слоёв
+> проверялись компилятором. Текст ниже сохранён как история рассуждений и не является
+> действующим.
 
 ## Контекст
 

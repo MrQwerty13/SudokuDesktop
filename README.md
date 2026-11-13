@@ -11,20 +11,38 @@
 | Компонент | Выбор | Обоснование |
 |---|---|---|
 | Язык | C# 14 / .NET 10 (LTS) | Активный LTS до 14.11.2028; рекомендован самим Avalonia |
-| UI | Avalonia UI 12.x | Единый код для трёх ОС, нативный вид на каждой платформе |
-| MVVM | CommunityToolkit.Mvvm | Source generators, без рантайм-рефлексии |
+| UI | Avalonia UI 12.1.6 | Единый код для трёх ОС, нативный вид на каждой платформе |
+| MVVM | CommunityToolkit.Mvvm 8.4.2 | Source generators, без рантайм-рефлексии |
+| Тесты | xUnit v3 + Avalonia.Headless | Headless-тесты UI без запуска окна |
 
 Подробности и альтернативы — в [docs/ADR](docs/ADR/) и [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Текущее состояние репозитория
 
-Репозиторий **не пустой**: в нём лежит рабочий скаффолд Avalonia-приложения
-(проект `Sudoku/` с окном-заглушкой «Welcome to Avalonia!»). Игровой функциональности нет.
+Этап 1 завершён: собран **компилируемый каркас** решения с разделением по слоям.
+Игровой логики пока нет (по требованию этапа генератор, игровая механика, таймер
+и сохранения не реализовывались).
 
-Git-репозиторий инициализирован, но **коммитов ещё нет** (ветка `main` пуста).
+Git: ветка `main`, базовое состояние зафиксировано коммитом `5455959` ("Created Base")
+и отправлено в `origin/main`. Изменения этапа 1 в коммит не включены — коммит создаёт владелец.
 
-Подробное описание обнаруженного состояния — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#2-обнаруженное-состояние-репозитория)
-и в разделе «Обнаруженное состояние» файла [Card.md](Card.md).
+## Структура решения
+
+```
+src/
+├── Sudoku.Domain/          домен: чистые типы, без UI и файловой системы
+├── Sudoku.Application/     сценарии игры и порты
+├── Sudoku.Infrastructure/  реализации портов, файловая система
+└── Sudoku.App/             Avalonia UI, ViewModels, композиция
+tests/
+├── Sudoku.Domain.Tests/
+├── Sudoku.Application.Tests/
+├── Sudoku.Infrastructure.Tests/
+└── Sudoku.App.Tests/        headless-тесты UI
+```
+
+Правило зависимостей: `App → Application → Domain`, `Infrastructure → Application`.
+Нарушение границ невозможно незаметно — это ошибка компиляции, а не замечание на ревью.
 
 ## Требования
 
@@ -34,24 +52,41 @@ Git-репозиторий инициализирован, но **коммито
   `libx11-6 libice6 libsm6 libfontconfig1`
   ([Avalonia: Linux dependencies](https://docs.avaloniaui.net/docs/platform-specific-guides/linux))
 
-## Сборка и запуск
+## Команды для разработчика
 
 ```bash
 # Восстановление зависимостей
 dotnet restore
 
-# Сборка (Debug)
+# Сборка всего решения (0 warnings, 0 errors)
 dotnet build
 
-# Запуск
-dotnet run --project Sudoku
+# Запуск приложения
+dotnet run --project src/Sudoku.App
+
+# Тесты (xUnit v3, Microsoft.Testing.Platform)
+dotnet test
+
+# Проверка единого стиля форматирования
+dotnet format --verify-no-changes
+```
+
+Полезное:
+
+```bash
+# Только тесты одного слоя
+dotnet test tests/Sudoku.Domain.Tests
+dotnet test tests/Sudoku.App.Tests
+
+# Сборка в Release
+dotnet build -c Release
 ```
 
 Опубликованный самодостаточный билд для конкретной ОС:
 
 ```bash
 # Пример для macOS (Apple Silicon)
-dotnet publish Sudoku -c Release -r osx-arm64 --self-contained true \
+dotnet publish src/Sudoku.App -c Release -r osx-arm64 --self-contained true \
   -p:PublishSingleFile=true -o out/osx-arm64
 ```
 

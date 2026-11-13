@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Sudoku.Domain</RootNamespace>
+    <AssemblyName>Sudoku.Domain</AssemblyName>
+    <Description>Domain model of Sudoku Desktop. Pure types, no UI, no I/O.</Description>
+  </PropertyGroup>
+
+</Project>

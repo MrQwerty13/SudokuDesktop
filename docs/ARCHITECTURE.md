@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — Sudoku Desktop
 
-Статус: проектная (этап 0 завершён, реализация не начата).
+Статус: этап 1 завершён (каркас решения собран, игровая логика не реализована).
 Дата: 2026-11-13.
 
 ---
@@ -30,9 +30,12 @@
 
 ---
 
-## 2. Обнаруженное состояние репозитория
+## 2. Состояние репозитория
 
-Репозиторий **не пустой** — в нём уже есть скаффолд Avalonia. Ничего не удалено и не переписано.
+### 2.1. Исходное состояние (этап 0)
+
+Репозиторий **не был пустым** — в нём уже лежал скаффолд Avalonia. Ничего не удалено
+и не переписано, существующие решения сохранены.
 
 ```
 Sudoku.sln                     # решение, 1 проект
@@ -48,15 +51,39 @@ Sudoku/Models/                 # пустая папка из шаблона
 .gitignore                     # без .idea/
 ```
 
-Состояние Git: ветка `main`, **0 коммитов**; `.gitignore`, `Sudoku.sln` и файлы `Sudoku/`
-проиндексированы, `Program.cs`, `ViewLocator.cs` и оба ViewModel — изменены после индексации,
-`.idea/` — не отслеживается.
+Состояние Git на начало работы: ветка `main`, **0 коммитов** (базовое состояние зафиксировано
+позже владельцем коммитом `5455959` "Created Base").
 
-Проверка: `dotnet build` → **Build succeeded, 0 warnings, 0 errors** (SDK 10.0.403, macOS arm64).
+### 2.2. Текущее состояние (после этапа 1)
 
-Изменения, которые будут сделаны на этапе 1 (не входят в текущий этап):
-обновление Avalonia 12.0.4 → 12.1.6, `AvaloniaUI.DiagnosticsSupport` 2.2.1 → 2.2.3,
-`CommunityToolkit.Mvvm` 8.4.1 → 8.4.2, добавление `.idea/` в `.gitignore`.
+```
+Sudoku.sln                     # решение, 8 проектов
+Directory.Build.props          # общие настройки сборки (net10.0, nullable, warnings-as-errors)
+Directory.Packages.props       # централизованное управление версиями пакетов
+.editorconfig                  # единый стиль форматирования
+src/
+├── Sudoku.Domain/             # classlib, без зависимостей
+├── Sudoku.Application/        # classlib → Sudoku.Domain
+├── Sudoku.Infrastructure/     # classlib → Sudoku.Application
+└── Sudoku.App/                # WinExe (Avalonia) → Sudoku.Application, Sudoku.Domain
+tests/
+├── Sudoku.Domain.Tests/       # xUnit v3
+├── Sudoku.Application.Tests/  # xUnit v3
+├── Sudoku.Infrastructure.Tests/ # xUnit v3
+└── Sudoku.App.Tests/          # xUnit v3 + Avalonia.Headless
+```
+
+Скаффолд перенесён без потерь: `Program.cs`, `App.axaml(.cs)`, `ViewLocator.cs`,
+`ViewModels/`, `Views/`, `Assets/`, `app.manifest` сохранены; проект переименован
+`Sudoku` → `Sudoku.App` и перемещён в `src/` (см. [ADR-0006](ADR/0006-domain-application-projects.md)).
+
+Обновлённые пакеты: Avalonia 12.0.4 → **12.1.6**, `AvaloniaUI.DiagnosticsSupport` 2.2.1 → **2.2.3**,
+`CommunityToolkit.Mvvm` 8.4.1 → **8.4.2**. Добавлены `Avalonia.Headless` / `Avalonia.Headless.XUnit`
+12.1.6 и `xunit.v3` 3.2.2.
+
+Проверка после этапа 1: `dotnet build` → **0 warnings, 0 errors**; `dotnet test` → **10/10 passed**;
+`dotnet format --verify-no-changes` → без замечаний; приложение запускается на macOS
+и открывает окно «Sudoku Desktop».
 
 ---
 
@@ -64,68 +91,73 @@ Sudoku/Models/                 # пустая папка из шаблона
 
 ### 3.1. Решение по числу проектов
 
-Классическое расщепление на Domain / Application / Infrastructure / Presentation для данного
-проекта **избыточно**: домен судоку — это доска, цифры и правила; отдельный слой Application
-не даёт самостоятельной ценности. Предлагается **три проекта** (см. [ADR-0002](ADR/0002-project-and-layer-structure.md)):
+Domain и Application выделены в **отдельные проекты**, чтобы границы слоёв проверялись
+компилятором, а не «договорённостью» ([ADR-0006](ADR/0006-domain-application-projects.md),
+заменяет [ADR-0002](ADR/0002-project-and-layer-structure.md)):
 
 ```
 Sudoku.sln
-├── Sudoku.Core/          (net10.0, classlib)   ← домен + прикладная логика, НЕТ UI и ФС
-├── Sudoku.Infrastructure/(net10.0, classlib)   ← сохранение, банк головоломок, пути ФС
-├── Sudoku.App/           (net10.0, WinExe)     ← Avalonia UI, ViewModels, DI
-├── Sudoku.Core.Tests/        (xUnit v3)
-├── Sudoku.Infrastructure.Tests/
-└── Sudoku.App.Tests/         (Avalonia.Headless + Avalonia.Headless.XUnit)
+├── src/Sudoku.Domain/         (net10.0, classlib)  ← домен, НЕТ UI и ФС
+├── src/Sudoku.Application/    (net10.0, classlib)  ← сценарии и порты
+├── src/Sudoku.Infrastructure/ (net10.0, classlib)  ← сохранение, банк головоломок, пути ФС
+├── src/Sudoku.App/            (net10.0, WinExe)    ← Avalonia UI, ViewModels, композиция
+├── tests/Sudoku.Domain.Tests/         (xUnit v3)
+├── tests/Sudoku.Application.Tests/    (xUnit v3)
+├── tests/Sudoku.Infrastructure.Tests/ (xUnit v3)
+└── tests/Sudoku.App.Tests/            (xUnit v3 + Avalonia.Headless)
 ```
 
-Правило зависимостей:
+Граф зависимостей (стрелка — «зависит от»):
 
 ```
-        ┌──────────────┐
-        │  Sudoku.App  │  (Avalonia)
-        └───┬──────┬───┘
-            │      │
-      ┌─────▼──┐ ┌─▼───────────────┐
-      │  Core  │ │ Infrastructure  │
-      └────────┘ └─────┬───────────┘
-            ▲           │
-            └───────────┘
+Sudoku.App ──────────┬──► Sudoku.Application ──► Sudoku.Domain
+                      └───────────────────────────┘
+Sudoku.Infrastructure ───► Sudoku.Application ──► Sudoku.Domain
 ```
 
-`Sudoku.Core` не ссылается ни на Avalonia, ни на `System.IO`. Всё, что связано с файловой
+`Sudoku.Domain` не ссылается ни на Avalonia, ни на `System.IO`. Всё, что связано с файловой
 системой, живёт в `Sudoku.Infrastructure`; UI — только в `Sudoku.App`.
 
-### 3.2. Что находится в `Sudoku.Core`
+Инварианты границ закреплены автотестами (`LayerBoundaryTests` в каждом тестовом проекте).
+
+**Композиция зависимостей:** DI-контейнер пока не подключён — объекты создаются напрямую
+в композиционном корне, внедрение идёт через конструкторы
+([ADR-0007](ADR/0007-composition-without-di-container.md)).
+
+### 3.2. Что находится в `Sudoku.Domain`
 
 **Домен (чистые типы, без побочных эффектов)**
 
-| Тип | Назначение |
-|---|---|
-| `Grid` / `Cell` | Доска 9×9; значение 0 = пусто; неизменяемый снаружи |
-| `Puzzle` | Головоломка: начальные подсказки + единственное решение + рейтинг сложности |
-| `Difficulty` | `Easy`, `Normal`, `Hard` |
-| `DifficultyRating` | Числовая оценка + ранг «потолка техник» |
-| `GameMode` | `Endless`, `TimeAttack` |
-| `GameSession` | Состояние захода: режим, сложность, текущая головоломка, введённые значения, счёт, таймер |
+| Тип | Назначение | Статус |
+|---|---|---|
+| `Difficulty` | `Easy`, `Normal`, `Hard` | ✅ реализован |
+| `GameMode` | `Endless`, `TimeAttack` | ✅ реализован |
+| `Grid` / `Cell` | Доска 9×9; значение 0 = пусто; неизменяемый снаружи | ⬜ этап 2 |
+| `Puzzle` | Головоломка: начальные подсказки + единственное решение + рейтинг сложности | ⬜ этап 2 |
+| `DifficultyRating` | Числовая оценка + ранг «потолка техник» | ⬜ этап 2 |
+| `GameSession` | Состояние захода: режим, сложность, текущая головоломка, введённые значения, счёт, таймер | ⬜ этап 2 |
+
+### 3.3. Что находится в `Sudoku.Application`
 
 **Прикладная логика (чистые функции, детерминированные)**
 
-| Тип | Назначение |
-|---|---|
-| `ISudokuSolver` | Решение головоломки; `Solve()` и `CountSolutions(limit: 2)` |
-| `MrvSudokuSolver` | Реализация: backtracking + constraint propagation + выбор ячейки по MRV |
-| `PuzzleGenerator` | Генерация головоломки заданной сложности с seed |
-| `IPuzzleGenerator` | Абстракция (нужна для подмены в тестах и для банка) |
-| `IDifficultyRater` | Оценка сложности по потолку техник |
-| `IHintProvider` | Следующий логический шаг для подсказки (использует тот же логический решатель) |
-| `ITimeProvider` | Абстракция времени (`UtcNow`, `Elapsed`) — для детерминированных тестов таймера |
-| `GameSessionFactory` | Создание сессии под режим и сложность |
+| Тип | Назначение | Статус |
+|---|---|---|
+| `GameOptions` | Опции игры для слоя представления: уровни сложности и режимы | ✅ реализован |
+| `ISudokuSolver` | Решение головоломки; `Solve()` и `CountSolutions(limit: 2)` | ⬜ этап 3 |
+| `MrvSudokuSolver` | Реализация: backtracking + constraint propagation + выбор ячейки по MRV | ⬜ этап 3 |
+| `PuzzleGenerator` | Генерация головоломки заданной сложности с seed | ⬜ этап 4 |
+| `IPuzzleGenerator` | Абстракция (нужна для подмены в тестах и для банка) | ⬜ этап 4 |
+| `IDifficultyRater` | Оценка сложности по потолку техник | ⬜ этап 4 |
+| `IHintProvider` | Следующий логический шаг для подсказки (использует тот же логический решатель) | ⬜ этап 5 |
+| `ITimeProvider` | Абстракция времени (`UtcNow`, `Elapsed`) — для детерминированных тестов таймера | ⬜ этап 2 |
+| `GameSessionFactory` | Создание сессии под режим и сложность | ⬜ этап 2 |
 
 **Ключевой инвариант детерминизма:** `PuzzleGenerator.Generate(difficulty, seed)` при одинаковом
 seed всегда даёт одну и ту же головоломку. `System.Random` создаётся внутри с явным seed;
 `Random.Shared` не используется.
 
-### 3.3. Что находится в `Sudoku.Infrastructure`
+### 3.4. Что находится в `Sudoku.Infrastructure`
 
 | Тип | Назначение |
 |---|---|
@@ -136,22 +168,29 @@ seed всегда даёт одну и ту же головоломку. `System
 | `IPuzzleBank` | Доступ к заранее сгенерированным головоломкам (в будущем) |
 | `PuzzleBank` | Файл/ресурс с банком + рандомизация перестановками цифр/строк/столбцов |
 
-### 3.4. Что находится в `Sudoku.App`
+### 3.5. Что находится в `Sudoku.App`
 
-| Тип | Назначение |
-|---|---|
-| `App`, `Program` | Точка входа, `UsePlatformDetect()`, DI-композиция |
-| `MainWindow` + `MainWindowViewModel` | Корень навигации: меню режимов и экран игры |
-| `GameView` + `GameViewModel` | Игровое поле, ввод, подсказки, таймер |
-| `BoardView` | Рисование поля 9×9 (переиспользуемый `ItemsControl`/`Canvas` с 81 ячейкой) |
-| `CellViewModel` | Состояние одной ячейки: значение, заданные/введённые, выделение, конфликт |
-| `TimerService` | Периодическое обновление отображения таймера; измеряет интервал через `ITimeProvider`, а не через `DispatcherTimer.Tick` |
-| `ThemeManager` | Светлая/тёмная тема (по умолчанию — системная) |
+| Тип | Назначение | Статус |
+|---|---|---|
+| `Program` | Точка входа, `AppBuilder`, `UsePlatformDetect()` | ✅ реализован |
+| `App` | Корневой `Avalonia.Application`: тема Fluent, создание окна | ✅ реализован |
+| `MainWindow` + `MainWindowViewModel` | Минимальное окно приложения (на текущем этапе — проверка запуска UI) | ✅ реализован |
+| `ViewLocator` | Маршрутизация ViewModel → View по соглашению имён | ✅ из скаффолда |
+| `GameView` + `GameViewModel` | Игровое поле, ввод, подсказки, таймер | ⬜ этап 7–8 |
+| `BoardView` | Рисование поля 9×9 (переиспользуемый `ItemsControl`/`Canvas` с 81 ячейкой) | ⬜ этап 8 |
+| `CellViewModel` | Состояние одной ячейки: значение, заданные/введённые, выделение, конфликт | ⬜ этап 8 |
+| `TimerService` | Периодическое обновление отображения таймера; измеряет интервал через `ITimeProvider`, а не через `DispatcherTimer.Tick` | ⬜ этап 10 |
+| `ThemeManager` | Светлая/тёмная тема (по умолчанию — системная) | ⬜ этап 7 |
 
 MVVM: CommunityToolkit.Mvvm (`[ObservableProperty]`, `[RelayCommand]`), compiled bindings
-(уже включены в скаффолде: `AvaloniaUseCompiledBindingsByDefault: true`).
+(включены в скаффолде: `AvaloniaUseCompiledBindingsByDefault: true`).
 
-### 3.5. Модель данных сохранения
+Пространство имён проекта — `Sudoku` (не `Sudoku.App`): так сохраняются имена
+`Sudoku.App` (класс приложения), `Sudoku.ViewModels`, `Sudoku.Views` из скаффолда и
+не возникает конфликта «namespace `Sudoku.App` vs type `Sudoku.App»» в тестовых проектах.
+Из-за namespace `Sudoku.Application` базовый класс указывается как `Avalonia.Application`.
+
+### 3.6. Модель данных сохранения
 
 ```jsonc
 // state.json (версионируется полем "version")
@@ -297,7 +336,7 @@ DLX / Algorithm X (729×324 exact cover) — **не нужен**: он опра�
 ### 7.1. macOS
 
 ```bash
-dotnet publish Sudoku -c Release -r osx-arm64 --self-contained true \
+dotnet publish src/Sudoku.App -c Release -r osx-arm64 --self-contained true \
   -p:PublishSingleFile=true -o out/osx-arm64
 ```
 
@@ -317,7 +356,7 @@ dotnet publish Sudoku -c Release -r osx-arm64 --self-contained true \
 ### 7.2. Windows
 
 ```bash
-dotnet publish Sudoku -c Release -r win-x64 --self-contained true -o out/win-x64
+dotnet publish src/Sudoku.App -c Release -r win-x64 --self-contained true -o out/win-x64
 ```
 
 - Инсталлятор — NSIS (`.exe`) или MSIX (WiX/MSIX SDK). Официальная документация Avalonia
@@ -328,7 +367,7 @@ dotnet publish Sudoku -c Release -r win-x64 --self-contained true -o out/win-x64
 ### 7.3. Linux
 
 ```bash
-dotnet publish Sudoku -c Release -r linux-x64 --self-contained true -o out/linux-x64
+dotnet publish src/Sudoku.App -c Release -r linux-x64 --self-contained true -o out/linux-x64
 ```
 
 - Обязательные зависимости: `libx11-6 libice6 libsm6 libfontconfig1`.
@@ -355,6 +394,21 @@ macOS-раннер — osx (+ подпись/нотаризация при на�
 
 Эталонные наборы: собственные 50 головоломок в формате Project Euler #96 (собственный
 генератор — из-за лицензии), плюс 17-подсказочные головоломки Royle (для проверки минимальности).
+
+### 8.1. Текущее состояние тестов
+
+| Проект | Тестов | Что проверяет |
+|---|---|---|
+| `Sudoku.Domain.Tests` | 4 | Состав и порядок уровней сложности и режимов; отсутствие ссылок на UI и другие слои |
+| `Sudoku.Application.Tests` | 3 | Состав игровых опций; зависимость Application только от Domain |
+| `Sudoku.Infrastructure.Tests` | 1 | Отсутствие ссылок на Avalonia и UI |
+| `Sudoku.App.Tests` | 2 | Headless: окно открывается, отображает название и данные из доменного слоя |
+
+Итого: **10 тестов**, все зелёные.
+
+Тест-проекты используют xUnit v3 в режиме Microsoft.Testing.Platform
+(`TestingPlatformDotnetTestSupport=true`), поэтому `dotnet test` работает без
+`Microsoft.NET.Test.Sdk` и `xunit.runner.visualstudio`.
 
 ---
 

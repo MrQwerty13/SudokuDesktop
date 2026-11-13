@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Sudoku.Tests.Application</RootNamespace>
+    <AssemblyName>Sudoku.Application.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Sudoku.Application/Sudoku.Application.csproj" />
+  </ItemGroup>
+
+</Project>

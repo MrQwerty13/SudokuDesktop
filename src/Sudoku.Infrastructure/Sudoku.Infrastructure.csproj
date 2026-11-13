@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Sudoku.Infrastructure</RootNamespace>
+    <AssemblyName>Sudoku.Infrastructure</AssemblyName>
+    <Description>Infrastructure layer of Sudoku Desktop. File system, persistence, puzzle bank.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Sudoku.Application/Sudoku.Application.csproj" />
+  </ItemGroup>
+
+</Project>

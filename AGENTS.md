@@ -20,19 +20,24 @@
 
 ## 1. Состояние репозитория (на 11.2026)
 
-- В репозитории есть рабочий скаффолд Avalonia (`Sudoku/`), игровой логики нет.
-- Git: ветка `main`, **коммитов нет**. Не создавай коммит, пока владелец не попросит.
-- Целевой фреймворк: `net10.0` (.NET 10 LTS). Avalonia 12.x.
+- **Этап 1 завершён**: собрана структура решения (4 проекта в `src/`, 4 тестовых в `tests/`),
+  игровой логики нет.
+- Git: ветка `main`, базовый коммит `5455959` ("Created Base") есть; изменения этапа 1 —
+  в рабочем дереве без коммита. Не создавай коммит, пока владелец не попросит.
+- Целевой фреймворк: `net10.0` (.NET 10 LTS). Avalonia 12.1.6.
 
 ## 2. Обязательные проверки перед завершением работы
 
 ```bash
-dotnet build                 # сборка всех проектов, 0 ошибок
-dotnet test                  # все тесты зелёные
-dotnet format --verify-no-changes   # если в репозитории появится .editorconfig с форматированием
+dotnet restore                  # восстановление зависимостей
+dotnet build                    # сборка всех проектов, 0 ошибок, 0 warnings
+dotnet test                     # все тесты зелёные
+dotnet format --verify-no-changes   # единый стиль форматирования
+dotnet run --project src/Sudoku.App  # запуск приложения (проверка UI)
 ```
 
-- Сборка обязана проходить с **0 warnings** (код проекта включает `Nullable: enable`).
+- Сборка обязана проходить с **0 warnings** (включены `Nullable: enable` и
+  `TreatWarningsAsErrors`).
 - Любое новое публичное поведение покрывается тестом.
 - После изменения структуры решений/проектов — обновить этот файл и `docs/TASKS.md`.
 
@@ -41,34 +46,45 @@ dotnet format --verify-no-changes   # если в репозитории поя�
 - C#, `net10.0`, nullable reference types включены, `file-scoped` namespaces, `var` — по вкусу команды,
   но единообразно в пределах файла.
 - **Никаких комментариев в коде**, кроме случаев, когда без пояснения невозможно понять
-  неочевидный алгоритм (например, шаг MRV-поиска). Комментарии — на русском или английском,
-  единообразно по проекту.
+  неочевидный алгоритм (например, шаг MRV-поиска). Для публичного API слоёв
+  `Sudoku.Domain` / `Sudoku.Application` обязательна XML-документация (NFR-13).
 - Именование: `PascalCase` для типов/методов, `camelCase` для локальных переменных,
   `_camelCase` для приватных полей, `I`-префикс для интерфейсов.
 - MVVM: ViewModel наследует `ViewModelBase : ObservableObject` (CommunityToolkit.Mvvm),
   используются `[ObservableProperty]` / `[RelayCommand]`. Никакого ручного `INotifyPropertyChanged`.
 - Никаких `async void`, кроме обработчиков событий Avalonia. Долгие операции — `async Task`.
 - Никаких блокировок на UI-потоке. Тяжёлые вычисления — `Task.Run`.
+- Версии пакетов — только в `Directory.Packages.props` (Central Package Management).
 
 ## 4. Правила слоёв (жёсткие)
 
 | Проект | Что содержит | Что запрещено |
 |---|---|---|
-| `Sudoku.Core` | Домен + прикладная логика: доска, генератор, решатель, рейтинг, режимы игры | Любые ссылки на Avalonia, System.IO, файловую систему, сеть |
-| `Sudoku.Infrastructure` | Хранилище состояния, банк головоломок, работа с ФС | Ссылка на Avalonia; бизнес-правила |
-| `Sudoku.App` | Avalonia UI, ViewModels, DI-композиция | Логика генерации/решательства; прямой доступ к ФС мимо Infrastructure |
+| `Sudoku.Domain` | Домен: доска, головоломка, сложность, режим, состояние захода | Любые ссылки на Avalonia, System.IO, файловую систему, сеть, другие слои |
+| `Sudoku.Application` | Сценарии, порты (абстракции), модели для UI | Avalonia, System.IO, сеть, ссылки на `Sudoku.Infrastructure` и `Sudoku.App` |
+| `Sudoku.Infrastructure` | Реализации портов, работа с ФС, банк головоломок | Ссылка на Avalonia; бизнес-правила; ссылка на `Sudoku.App` |
+| `Sudoku.App` | Avalonia UI, ViewModels, композиция | Логика генерации/решательства; прямой доступ к ФС мимо Infrastructure |
 
-- `Sudoku.Core` **не должен** знать о существовании UI. Это главный инвариант, который
+- Граф зависимостей: `App → Application → Domain`, `Infrastructure → Application`.
+  Обратных ссылок нет. Нарушение = ошибка компиляции.
+- `Sudoku.Domain` **не должен** знать о существовании UI. Это главный инвариант, который
   позволяет тестировать весь игровой код без запуска окна.
-- Зависимости: `App → Core`, `App → Infrastructure`, `Infrastructure → Core`. Обратных нет.
-- Если требуется «уточнение» зависимости — добавь абстракцию в `Core` и реализацию в `Infrastructure`,
-  а не ссылку на конкретную файловую систему.
+- Инварианты границ закреплены тестами `LayerBoundaryTests` в каждом тестовом проекте —
+  при добавлении нового слоя/ссылки правится и тест.
+- Если требуется «уточнение» зависимости — добавь абстракцию в `Sudoku.Application`
+  и реализацию в `Sudoku.Infrastructure`, а не ссылку на конкретную файловую систему.
+- DI-контейнер пока **не используется** ([ADR-0007](docs/ADR/0007-composition-without-di-container.md)):
+  объекты создаются напрямую в композиционном корне, зависимости — через конструкторы.
 
 ## 5. Тестирование
 
 - Фреймворк: **xUnit v3** (Avalonia 12 перешёл на xUnit v3; NUnit 4 — альтернатива).
+- Тест-проекты работают в режиме Microsoft.Testing.Platform
+  (`TestingPlatformDotnetTestSupport=true`); `dotnet test` запускает их без VSTest.
 - UI-тесты: `Avalonia.Headless` + `Avalonia.Headless.XUnit` (версия — та же, что у Avalonia).
-- Структура тестов: `Sudoku.Core.Tests`, `Sudoku.Infrastructure.Tests`, `Sudoku.App.Tests`.
+  Атрибут `AvaloniaTestApplication` живёт в пространстве имён `Avalonia.Headless`.
+- Структура тестов: `Sudoku.Domain.Tests`, `Sudoku.Application.Tests`,
+  `Sudoku.Infrastructure.Tests`, `Sudoku.App.Tests`.
 - Обязательные категории тестов:
   - генератор: уникальность решения, детерминизм по seed, попадание в заданную сложность;
   - решатель: корректность на эталонных головоломках (Project Euler #96 — 50 сеток);
