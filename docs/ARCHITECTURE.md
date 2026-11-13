@@ -85,6 +85,18 @@ tests/
 `dotnet format --verify-no-changes` → без замечаний; приложение запускается на macOS
 и открывает окно «Sudoku Desktop».
 
+### 2.3. Что добавлено на этапе 3
+
+| Проект | Добавлено |
+|---|---|
+| `src/Sudoku.Domain` | `Grid` — неизменяемая доска 9×9 с разбором из строки и проверками |
+| `src/Sudoku.Application` | `ISudokuSolver`, `MrvSudokuSolver`, `SolveOutcome`, `SolveResult` |
+| `tests/Sudoku.Domain.Tests` | 13 тестов `Grid` |
+| `tests/Sudoku.Application.Tests` | 14 тестов решателя + эталонные тестовые данные |
+
+Проверка после этапа 3: `dotnet build` → **0 warnings, 0 errors**; `dotnet test` → **37/37 passed**;
+`dotnet format --verify-no-changes` → без замечаний.
+
 ---
 
 ## 3. Целевая архитектура
@@ -132,7 +144,8 @@ Sudoku.Infrastructure ───► Sudoku.Application ──► Sudoku.Domain
 |---|---|---|
 | `Difficulty` | `Easy`, `Normal`, `Hard` | ✅ реализован |
 | `GameMode` | `Endless`, `TimeAttack` | ✅ реализован |
-| `Grid` / `Cell` | Доска 9×9; значение 0 = пусто; неизменяемый снаружи | ⬜ этап 2 |
+| `Grid` | Доска 9×9; значение 0 = пусто; неизменяемая; разбор из строки, проверки полноты и непротиворечивости | ✅ реализован |
+| `Cell` | Отдельный тип ячейки | ⬜ этап 2 |
 | `Puzzle` | Головоломка: начальные подсказки + единственное решение + рейтинг сложности | ⬜ этап 2 |
 | `DifficultyRating` | Числовая оценка + ранг «потолка техник» | ⬜ этап 2 |
 | `GameSession` | Состояние захода: режим, сложность, текущая головоломка, введённые значения, счёт, таймер | ⬜ этап 2 |
@@ -144,8 +157,9 @@ Sudoku.Infrastructure ───► Sudoku.Application ──► Sudoku.Domain
 | Тип | Назначение | Статус |
 |---|---|---|
 | `GameOptions` | Опции игры для слоя представления: уровни сложности и режимы | ✅ реализован |
-| `ISudokuSolver` | Решение головоломки; `Solve()` и `CountSolutions(limit: 2)` | ⬜ этап 3 |
-| `MrvSudokuSolver` | Реализация: backtracking + constraint propagation + выбор ячейки по MRV | ⬜ этап 3 |
+| `ISudokuSolver` | Решение головоломки; `Solve()` и `CountSolutions(limit)` | ✅ реализован |
+| `MrvSudokuSolver` | Реализация: backtracking + constraint propagation + выбор ячейки по MRV | ✅ реализован |
+| `SolveOutcome` / `SolveResult` | Вид решения и найденные варианты | ✅ реализован |
 | `PuzzleGenerator` | Генерация головоломки заданной сложности с seed | ⬜ этап 4 |
 | `IPuzzleGenerator` | Абстракция (нужна для подмены в тестах и для банка) | ⬜ этап 4 |
 | `IDifficultyRater` | Оценка сложности по потолку техник | ⬜ этап 4 |
@@ -230,9 +244,9 @@ MVVM: CommunityToolkit.Mvvm (`[ObservableProperty]`, `[RelayCommand]`), compiled
 
 Один и тот же движок решает три задачи:
 
-1. `Solve(grid)` — единственное решение.
-2. `CountSolutions(grid, limit: 2)` — уникальность (прерывается на втором решении).
-3. Пошаговое применение техник (для подсказок).
+1. `Solve(grid)` — единственное решение;
+2. `CountSolutions(grid, limit: 2)` — уникальность (прерывается на втором решении);
+3. Пошаговое применение техник (для подсказок) — этап 5.
 
 Реализация: битовые маски кандидатов + constraint propagation (naked single, hidden single)
 + DFS с выбором ячейки по **MRV** (minimum remaining values). Для Sudoku этого достаточно;
@@ -240,6 +254,22 @@ MVVM: CommunityToolkit.Mvvm (`[ObservableProperty]`, `[RelayCommand]`), compiled
 
 DLX / Algorithm X (729×324 exact cover) — **не нужен**: он оправдан, когда требуется перечисление
 всех решений. Проверка «решений ровно одно» делается тем же MRV-решателем с лимитом 2.
+
+**Статус: реализовано** ([ADR-0008](ADR/0008-sudoku-solver-algorithm.md)).
+
+| Свойство | Реализация |
+|---|---|
+| Вход | Неизменяемый `Sudoku.Domain.Grid` |
+| Результат | `SolveResult` с `SolveOutcome`: `NoSolution` / `UniqueSolution` / `MultipleSolutions` |
+| Остановка | `Solve` останавливается после второго решения; `CountSolutions(grid, limit)` — произвольный предел |
+| Детерминизм | Порядок ячеек (наименьший индекс при равенстве) и цифр (по возрастанию) фиксированы |
+| Некорректный ввод | `Grid.FromString` → `ArgumentException`; `TryFromString` → `false`; `null` → `ArgumentNullException`; предел < 1 → `ArgumentOutOfRangeException`; противоречивые заданные цифры → `NoSolution` |
+| Отсутствие мутаций | `Grid` неизменяем, решатель работает на собственном состоянии с откатом через стек назначений |
+| Производительность | Классическая головоломка — ~1 мс; разреженная (40–48 подсказок) — 0–3 мс; поиск двух решений для пустой доски — ~1 мс |
+
+Реализованы приёмы только первого уровня (singles). Приёмы уровня пар и выше (naked/hidden pair,
+X-Wing, цепочки) в решателе отсутствуют: они потребуются логическому решателю для рейтинга
+сложности (ADR-0003, этапы 4–5).
 
 ### 4.2. Генерация
 
@@ -399,12 +429,16 @@ macOS-раннер — osx (+ подпись/нотаризация при на�
 
 | Проект | Тестов | Что проверяет |
 |---|---|---|
-| `Sudoku.Domain.Tests` | 4 | Состав и порядок уровней сложности и режимов; отсутствие ссылок на UI и другие слои |
-| `Sudoku.Application.Tests` | 3 | Состав игровых опций; зависимость Application только от Domain |
+| `Sudoku.Domain.Tests` | 17 | `Grid`: разбор строки, ошибки ввода, полнота, непротиворечивость, равенство, индексация |
+| `Sudoku.Application.Tests` | 17 | Решатель: известная головоломка, отсутствие решения, несколько решений, уже решённая доска, некорректный ввод, неизменность входа, детерминизм, предел поиска; отсутствие зависимостей Application от UI |
 | `Sudoku.Infrastructure.Tests` | 1 | Отсутствие ссылок на Avalonia и UI |
 | `Sudoku.App.Tests` | 2 | Headless: окно открывается, отображает название и данные из доменного слоя |
 
-Итого: **10 тестов**, все зелёные.
+Итого: **37 тестов**, все зелёные.
+
+Тестовые данные решателя — опубликованные головоломки (статья «Sudoku» в Википедии)
+и неоднозначная головоломка, полученная из опубликованного решения удалением четырёх ячеек.
+Данные не получены от собственного решателя.
 
 Тест-проекты используют xUnit v3 в режиме Microsoft.Testing.Platform
 (`TestingPlatformDotnetTestSupport=true`), поэтому `dotnet test` работает без
