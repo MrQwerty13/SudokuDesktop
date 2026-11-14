@@ -10,4 +10,8 @@
     <ProjectReference Include="../Sudoku.Domain/Sudoku.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Sudoku.Application.Tests" />
+  </ItemGroup>
+
 </Project>

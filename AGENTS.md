@@ -22,10 +22,15 @@
 
 - **Этап 1 завершён**: собрана структура решения (4 проекта в `src/`, 4 тестовых в `tests/`).
 - **Этап 3 завершён**: реализованы `Sudoku.Domain.Grid` и решатель `MrvSudokuSolver`.
-- **Этап 2 частично**: `Grid` есть; `Puzzle`, `GameSession`, `ITimeProvider` — нет.
-- Git: ветка `main`, базовый коммит `5455959` ("Created Base"); этапы 1 и 3 зафиксированы
-  коммитами `1f21f3b` ("Created Step2") и `87ed76f` ("Done dev-point.3").
-  Не создавай коммит, пока владелец не попросит.
+- **Этап 4 завершён**: генератор головоломок (`PuzzleGenerator`), рейтинг v1 по потолку
+  логических приёмов (`LogicalSolver`, `LogicalDifficultyRater`), калибровка уровней
+  (`DifficultyBands`), порты `IPuzzleGenerator` / `IDifficultyRater` / `IRandomSource`.
+  Алгоритм и ограничения — [ADR-0009](docs/ADR/0009-puzzle-generation-algorithm.md).
+- **Этап 2 частично**: `Grid`, `Puzzle`, `DifficultyRating` есть; `Cell`, `GameSession`,
+  `ITimeProvider` — нет.
+- Git: ветка `main`, базовый коммит `5455959` ("Created Base"); этапы 1, 3 и 4 зафиксированы
+  коммитами `1f21f3b` ("Created Step2"), `87ed76f` ("Done dev-point.3") и `eb68054`
+  ("Realised Task4"). Не создавай коммит, пока владелец не попросит.
 - Целевой фреймворк: `net10.0` (.NET 10 LTS). Avalonia 12.1.6.
 
 ## 2. Обязательные проверки перед завершением работы
