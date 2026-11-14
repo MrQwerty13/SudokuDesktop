@@ -28,10 +28,10 @@ public sealed class GameSessionFactory : IGameSessionFactory
     }
 
     /// <inheritdoc />
-    public GameSession CreateNewGame(Difficulty difficulty, int seed)
+    public GameSession CreateNewEndlessGame(Difficulty difficulty, int seed)
     {
         Puzzle puzzle = _generator.Generate(difficulty, seed);
 
-        return new GameSession(puzzle);
+        return new GameSession(puzzle, GameMode.Endless);
     }
 }

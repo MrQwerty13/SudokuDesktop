@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sudoku.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="620"
+             x:Class="Sudoku.Views.EndlessGameView"
+             x:DataType="vm:EndlessGameViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Button.cell">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="CornerRadius" Value="2" />
+        </Style>
+        <Style Selector="Button.cell.given">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Background" Value="#22808080" />
+        </Style>
+        <Style Selector="Button.cell.selected">
+            <Setter Property="BorderBrush" Value="#FF3060C0" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Button.cell.conflict">
+            <Setter Property="Foreground" Value="#FFD02020" />
+        </Style>
+        <Style Selector="Button.cell.wrong">
+            <Setter Property="Foreground" Value="#FFD07000" />
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="10">
+
+        <TextBlock Text="{Binding ModeText}" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding DifficultyText}" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding StatusText}" />
+        <TextBlock Text="{Binding BoardStateText}" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding TimerText}" Opacity="0.7" />
+
+        <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4" Padding="4">
+            <ItemsControl ItemsSource="{Binding Cells}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="9" Columns="9" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:CellViewModel">
+                        <Button Classes="cell"
+                                Classes.given="{Binding IsGiven}"
+                                Classes.selected="{Binding IsSelected}"
+                                Classes.conflict="{Binding HasConflict}"
+                                Classes.wrong="{Binding IsWrong}"
+                                Content="{Binding Text}"
+                                Command="{Binding SelectCommand}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <WrapPanel Orientation="Horizontal">
+            <Button Content="1" Command="{Binding EnterDigitCommand}" CommandParameter="1" Margin="2" MinWidth="36" />
+            <Button Content="2" Command="{Binding EnterDigitCommand}" CommandParameter="2" Margin="2" MinWidth="36" />
+            <Button Content="3" Command="{Binding EnterDigitCommand}" CommandParameter="3" Margin="2" MinWidth="36" />
+            <Button Content="4" Command="{Binding EnterDigitCommand}" CommandParameter="4" Margin="2" MinWidth="36" />
+            <Button Content="5" Command="{Binding EnterDigitCommand}" CommandParameter="5" Margin="2" MinWidth="36" />
+            <Button Content="6" Command="{Binding EnterDigitCommand}" CommandParameter="6" Margin="2" MinWidth="36" />
+            <Button Content="7" Command="{Binding EnterDigitCommand}" CommandParameter="7" Margin="2" MinWidth="36" />
+            <Button Content="8" Command="{Binding EnterDigitCommand}" CommandParameter="8" Margin="2" MinWidth="36" />
+            <Button Content="9" Command="{Binding EnterDigitCommand}" CommandParameter="9" Margin="2" MinWidth="36" />
+        </WrapPanel>
+
+        <WrapPanel Orientation="Horizontal">
+            <Button Content="Стереть" Command="{Binding EraseCommand}" Margin="2" />
+            <Button Content="Подсказка" Command="{Binding HintCommand}" Margin="2" />
+            <Button Content="Новая головоломка" Command="{Binding NewPuzzleCommand}" Margin="2" />
+            <Button Content="Завершить заход" Command="{Binding ExitCommand}" Margin="2" />
+        </WrapPanel>
+
+    </StackPanel>
+
+</UserControl>

@@ -22,6 +22,7 @@ namespace Sudoku.Domain;
 public sealed class GameSession
 {
     private readonly Puzzle _puzzle;
+    private readonly GameMode _mode;
     private Grid _state;
     private bool[] _conflicts;
     private CellPosition? _selectedCell;
@@ -32,16 +33,18 @@ public sealed class GameSession
     /// Создаёт игровую сессию по готовой головоломке.
     /// </summary>
     /// <param name="puzzle">Головоломка с подтверждённым решением.</param>
+    /// <param name="mode">Режим игры, которому принадлежит сессия.</param>
     /// <exception cref="ArgumentNullException">Параметр <paramref name="puzzle"/> равен <c>null</c>.</exception>
     /// <exception cref="ArgumentException">
     /// Решение неполное или исходные значения не совпадают с решением.
     /// </exception>
-    public GameSession(Puzzle puzzle)
+    public GameSession(Puzzle puzzle, GameMode mode)
     {
         ArgumentNullException.ThrowIfNull(puzzle);
         Validate(puzzle);
 
         _puzzle = puzzle;
+        _mode = mode;
         _state = puzzle.Clues;
         _conflicts = ConflictScanner.Compute(_state);
     }
@@ -70,6 +73,15 @@ public sealed class GameSession
     /// Уровень сложности головоломки.
     /// </summary>
     public Difficulty Difficulty => _puzzle.Difficulty;
+
+    /// <summary>
+    /// Режим игры, которому принадлежит сессия.
+    /// </summary>
+    /// <remarks>
+    /// Режим задаётся при создании и не меняется: это исключает случайный запуск
+    /// одного режима вместо другого.
+    /// </remarks>
+    public GameMode Mode => _mode;
 
     /// <summary>
     /// Выбранная ячейка либо <c>null</c>, если ячейка не выбрана.

@@ -21,7 +21,7 @@ public class GameSessionFactoryTests
     [InlineData(Difficulty.Hard)]
     public void New_game_starts_with_given_values_of_generated_puzzle(Difficulty difficulty)
     {
-        var session = _factory.CreateNewGame(difficulty, seed: 101);
+        var session = _factory.CreateNewEndlessGame(difficulty, seed: 101);
 
         Assert.Equal(difficulty, session.Difficulty);
         Assert.Equal(session.Puzzle.Clues, session.InitialState);
@@ -39,8 +39,8 @@ public class GameSessionFactoryTests
     [InlineData(Difficulty.Hard)]
     public void New_game_is_reproducible_for_the_same_seed(Difficulty difficulty)
     {
-        var first = _factory.CreateNewGame(difficulty, seed: 202);
-        var second = _factory.CreateNewGame(difficulty, seed: 202);
+        var first = _factory.CreateNewEndlessGame(difficulty, seed: 202);
+        var second = _factory.CreateNewEndlessGame(difficulty, seed: 202);
 
         Assert.Equal(first.InitialState, second.InitialState);
         Assert.Equal(first.Solution, second.Solution);
@@ -49,8 +49,8 @@ public class GameSessionFactoryTests
     [Fact]
     public void New_game_differs_for_different_seeds()
     {
-        var first = _factory.CreateNewGame(Difficulty.Normal, seed: 1);
-        var second = _factory.CreateNewGame(Difficulty.Normal, seed: 2);
+        var first = _factory.CreateNewEndlessGame(Difficulty.Normal, seed: 1);
+        var second = _factory.CreateNewEndlessGame(Difficulty.Normal, seed: 2);
 
         Assert.NotEqual(first.InitialState, second.InitialState);
     }
@@ -58,8 +58,8 @@ public class GameSessionFactoryTests
     [Fact]
     public void New_game_starts_independent_session()
     {
-        var first = _factory.CreateNewGame(Difficulty.Easy, seed: 5);
-        var second = _factory.CreateNewGame(Difficulty.Easy, seed: 5);
+        var first = _factory.CreateNewEndlessGame(Difficulty.Easy, seed: 5);
+        var second = _factory.CreateNewEndlessGame(Difficulty.Easy, seed: 5);
 
         first.SelectCell(0);
         first.EnterValue(1);
@@ -71,7 +71,7 @@ public class GameSessionFactoryTests
     [Fact]
     public void Playing_generated_game_to_the_end_produces_a_win()
     {
-        var session = _factory.CreateNewGame(Difficulty.Easy, seed: 7);
+        var session = _factory.CreateNewEndlessGame(Difficulty.Easy, seed: 7);
 
         for (int index = 0; index < Grid.CellCount; index++)
         {
@@ -92,7 +92,7 @@ public class GameSessionFactoryTests
     [Fact]
     public void Hint_of_generated_game_matches_puzzle_solution()
     {
-        var session = _factory.CreateNewGame(Difficulty.Normal, seed: 11);
+        var session = _factory.CreateNewEndlessGame(Difficulty.Normal, seed: 11);
 
         var emptyIndex = Enumerable.Range(0, Grid.CellCount)
             .First(index => session.GetCell(index).IsEmpty);
@@ -114,6 +114,6 @@ public class GameSessionFactoryTests
     [Fact]
     public void Factory_rejects_unknown_difficulty()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => _factory.CreateNewGame((Difficulty)42, seed: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => _factory.CreateNewEndlessGame((Difficulty)42, seed: 1));
     }
 }

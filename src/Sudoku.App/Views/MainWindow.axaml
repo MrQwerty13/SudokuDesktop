@@ -3,28 +3,46 @@
         xmlns:vm="using:Sudoku.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="260"
+        mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="720"
         x:Class="Sudoku.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Sudoku Desktop"
-        Width="480"
-        Height="260">
+        Width="520"
+        Height="720">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-        <TextBlock Text="{Binding ApplicationName}"
-                   FontSize="28"
-                   FontWeight="SemiBold"
-                   HorizontalAlignment="Center" />
-        <TextBlock Text="{Binding StatusText}" HorizontalAlignment="Center" />
-        <TextBlock Text="{Binding DifficultiesText, StringFormat='Difficulties: {0}'}"
-                   HorizontalAlignment="Center" />
-        <TextBlock Text="{Binding ModesText, StringFormat='Modes: {0}'}"
-                   HorizontalAlignment="Center" />
-    </StackPanel>
+    <ScrollViewer>
+        <StackPanel Margin="16" Spacing="12">
+
+            <TextBlock Text="{Binding ApplicationName}"
+                       FontSize="24"
+                       FontWeight="SemiBold" />
+
+            <TextBlock Text="{Binding ModeText}" FontWeight="SemiBold" />
+
+            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
+
+            <Border BorderBrush="#40808080" BorderThickness="1" CornerRadius="4" Padding="10">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Сложность:" FontWeight="SemiBold" />
+                    <ComboBox ItemsSource="{Binding Difficulties}"
+                              SelectedItem="{Binding SelectedDifficulty}"
+                              HorizontalAlignment="Left"
+                              MinWidth="160" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Начать игру (Endless)" Command="{Binding StartEndlessGameCommand}" />
+                        <Button Content="В меню" Command="{Binding OpenMenuCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <ContentControl Content="{Binding Endless}" />
+
+        </StackPanel>
+    </ScrollViewer>
 
 </Window>

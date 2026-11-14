@@ -29,6 +29,9 @@
 - **Этап 2 частично**: `Grid`, `Puzzle`, `DifficultyRating`, `Cell`, `CellPosition`,
   `GameSession` (выбор, ввод, стирание, конфликты, подсказки по решению, победа) есть;
   `ITimeProvider`, счёт и таймер — нет (этап 10).
+- **Этапы 7 и 9 частично**: меню и экран захода Endless
+  (`MainWindowViewModel`, `EndlessGameViewModel`, `CellViewModel`, `Composition`),
+  сценарий захода `EndlessGame`; экран итогов, темы и режим Time Attack — нет.
 - Git: ветка `main`, базовый коммит `5455959` ("Created Base"); этапы 1, 3 и 4 зафиксированы
   коммитами `1f21f3b` ("Created Step2"), `87ed76f` ("Done dev-point.3") и `eb68054`
   ("Realised Task4"). Не создавай коммит, пока владелец не попросит.

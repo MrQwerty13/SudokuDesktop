@@ -11,7 +11,7 @@ public class GameSessionTests
         var solution = Grid.FromString(SessionTestData.ClassicSolution);
         var rating = DifficultyRating.Solved(true, SudokuTechnique.NakedSingle, 30);
 
-        return new GameSession(new Puzzle(clues, solution, Difficulty.Normal, rating));
+        return new GameSession(new Puzzle(clues, solution, Difficulty.Normal, rating), GameMode.Endless);
     }
 
     [Fact]
@@ -407,7 +407,7 @@ public class GameSessionTests
     [Fact]
     public void Session_rejects_null_puzzle()
     {
-        Assert.Throws<ArgumentNullException>(() => new GameSession(null!));
+        Assert.Throws<ArgumentNullException>(() => new GameSession(null!, GameMode.Endless));
     }
 
     [Fact]
@@ -426,7 +426,7 @@ public class GameSessionTests
 
         var puzzle = new Puzzle(clues, broken, Difficulty.Normal, rating);
 
-        Assert.Throws<ArgumentException>(() => new GameSession(puzzle));
+        Assert.Throws<ArgumentException>(() => new GameSession(puzzle, GameMode.Endless));
     }
 
     [Fact]
@@ -438,7 +438,7 @@ public class GameSessionTests
 
         var puzzle = new Puzzle(clues, incomplete, Difficulty.Normal, rating);
 
-        Assert.Throws<ArgumentException>(() => new GameSession(puzzle));
+        Assert.Throws<ArgumentException>(() => new GameSession(puzzle, GameMode.Endless));
     }
 
     [Fact]
