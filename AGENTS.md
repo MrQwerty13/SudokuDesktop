@@ -26,8 +26,9 @@
   логических приёмов (`LogicalSolver`, `LogicalDifficultyRater`), калибровка уровней
   (`DifficultyBands`), порты `IPuzzleGenerator` / `IDifficultyRater` / `IRandomSource`.
   Алгоритм и ограничения — [ADR-0009](docs/ADR/0009-puzzle-generation-algorithm.md).
-- **Этап 2 частично**: `Grid`, `Puzzle`, `DifficultyRating` есть; `Cell`, `GameSession`,
-  `ITimeProvider` — нет.
+- **Этап 2 частично**: `Grid`, `Puzzle`, `DifficultyRating`, `Cell`, `CellPosition`,
+  `GameSession` (выбор, ввод, стирание, конфликты, подсказки по решению, победа) есть;
+  `ITimeProvider`, счёт и таймер — нет (этап 10).
 - Git: ветка `main`, базовый коммит `5455959` ("Created Base"); этапы 1, 3 и 4 зафиксированы
   коммитами `1f21f3b` ("Created Step2"), `87ed76f` ("Done dev-point.3") и `eb68054`
   ("Realised Task4"). Не создавай коммит, пока владелец не попросит.

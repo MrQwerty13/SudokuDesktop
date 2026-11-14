@@ -24,6 +24,7 @@
 | `DifficultyBands` / `DifficultyBand` | Калибровка уровней: полосы потолка приёмов, минимум подсказок |
 | `IRandomSource` / `SystemRandomSource` | Источник случайности с явным seed |
 | `PuzzleGenerationException` | Не удалось построить головоломку заданного уровня |
+| `IGameSessionFactory` / `GameSessionFactory` | Новая игра: генерация головоломки выбранной сложности по seed и создание сессии |
 
 Внутренние (не публичные) типы: `LogicalSolver` — лестница приёмов v1, на которой строится
 оценка сложности; `RandomGridFiller` — случайное корректное заполнение доски.
